@@ -115,6 +115,12 @@ Dependiendo de las opciones usadas,  puedes controlar aspectos especificos del e
 **Los grupos tambien pueden tener una constraseña, que puede ser establecida usando el comando gpasswd. Los usuarios que no son miembros de un grupo pero conocen su contraseña, pueden unirse de forma temporal usando el comando newgrp. Recuerda que gpasswd  tambien se usa para añadir y eliminar usuarios de un grupo y para establecer la lista de administradores y miembros ordinarios del grupo**
 
 
+gpasswd - cambiar contraseña de un grupo, tambien se usa para añadir y eliminar usuarios de un grupo
+newgrp - unirse temporalmente a un grupo
+
+
+
+
 ### El comando change 
 Este comando determinado como "change age", se utiliza para cambiar el periodo de la contraseña de un usuario. El comando change esta restringido a root, excepto la opcion -l, que puede ser usada por usuarios ordinarios para listar el tiempo de su contraseña
 
