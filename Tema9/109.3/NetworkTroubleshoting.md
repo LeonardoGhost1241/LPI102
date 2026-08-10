@@ -1,7 +1,4 @@
-#########################################
 # Resolucion de problemas basicos de red
-########################################
-
 
 -> Leccion 1
 
@@ -103,7 +100,172 @@ ip addr add 2001:db8::10/64 dev enp0s8
 
 ```
 
+### Configuracion de opciones de bajo nivel
 
+Una tarea comun para ip link es desactivar o activar una interfaz y con ifconfig tambien se hace como:
+
+```
+ip link set dev enp0s8 down 
+
+ip link show dev enp0s8  
+```
+
+```
+ifconfig enp0s8 up
+
+ip link show dev enp0s8
+```
+
+A veces puede ser necesario ajustar la MTU de una interfaz. Al igual que con la habilitacion/deshabilitacion de interfaces, esto puede hacerse con `ifconfig` o `ip link`
+
+```
+ip link set enp0s8 mtu 2000
+```
+
+```
+ifconfig enp0s3 mtu 1500
+```
+
+### La tabla de enrutamiento 
+
+Para ver la tabla de rutas, podemos usar:
+
+```
+route
+
+netstat -r
+
+ip route
+```
+
+Para modificar las tablas debemos usar 
+
+```
+route 
+
+ip route
+```
+
+Para ver la tabla de enrutamiento para ipv6, debe usar uno de los siguientes comandos:
+
+```
+route -6 
+
+netstat -6r 
+
+ip -6 route
+
+```
+
+```
+$ route -6
+Kernel IPv6 routing table
+Destination                    Next Hop                   Flag Met Ref Use If
+2001:db8::/64                  [::]                       U    256 0      0 enp0s8
+fe80::/64                      [::]                       U    100 0      0 enp0s3
+2002:a00::/24                  [::]                       !n   1024 0      0 lo
+[::]/0                         2001:db8::1                UG   1   0      0 enp0s8
+localhost/128                  [::]                       Un   0   2     84 lo
+2001:db8::10/128               [::]                       Un   0   1      0 lo
+fe80::a00:27ff:fe54:5359/128   [::]                       Un   0   1      0 lo
+ff00::/8                       [::]                       U    256 1      3 enp0s3
+ff00::/8                       [::]                       U    256 1      6 enp0s8
+```
+
+**Flag**: proporciona informacion sobre la ruta
+- U indica que la ruta esta activa
+- ! significa que la rutta ha sido rechazada, es decir, que no sera utilizada
+- n significa que la ruta no ha sido cacheada (el kernel mantienen una cache de rutas para busquedas mas rapidas por separado de todas las rutas conocidas)
+- Indica una puerta de enlace 
+- Metric o Met no es utilizada por el kernel. Se refiere a la distancia administrativa al objetivo, esta distancia administrativa es utilizada por los protocolos de enrutamiento para determinar las rutas dinamicas
+- Ref es el recuento de referencias, o el numero de usos de una ruta, al igual que metric, no es utilizada por el kernel
+- Use muestra el numero de busquedas de una ruta
+
+```
+[root@archlinux ~]# netstat -r
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+default         _gateway        0.0.0.0         UG        0 0          0 enp0s3
+192.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 enp0s3
+```
+- MSS indica el tamaño maximo de segmento para las conexiones TCP sobre esa ruta
+- La columna window muestra el tamaño predeterminado de la ventana TCP
+- La columna irtt muestra el tiempo de ida y vuelta de los paqyuetes 
+
+```
+default via 192.168.1.254 dev enp0s3 proto static 
+192.168.1.0/24 dev enp0s3 proto kernel scope link src 192.168.1.78 
+```
+
+- Destino
+- Direccion opcional seguida de interfaz
+- El protocolo de enrutamiento utilizado para añadir la ruta
+- El ambito de la ruta. Si se omite, se trata de un ambito global o de una puerta de enlace
+- La metrica de la ruta. Esta es utilizada por los protocolos de enrutamiento dinamico para determinar el coste de la ruta. La mayoria de los sistemas no la utilizan
+- Si es una ruta IPv6, la preferencia de ruta RFC4191
+
+Otros ejemplos:
+
+ipv4
+
+```
+default via 10.0.2.2 dev enp0s3 proto dhcp metric 100
+```
+
+1. El destino es la ruta por defecto.
+
+2. La dirección de la puerta de enlace es 10.0.2.2 alcanzable a través de la interfaz enp0s3.
+
+3. Ha sido añadida a la tabla de enrutamiento por DHCP.
+
+4. Se ha omitido el ámbito, por lo que es global.
+
+5. La ruta tiene un valor de coste de 100.
+
+6. No hay preferencia de ruta IPv6
+
+
+ipv6
+
+```
+fc0::/64 dev enp0s8 proto kernel metric 256 pref medium
+```
+
+
+1. El destino es fc0::/64.
+
+2. Es alcanzable a través de la interfaz enp0s8.
+
+3. Ha sido añadida automáticamente por el kernel.
+
+4. Se ha omitido el ámbito, por lo que es global.
+
+5. La ruta tiene un valor de coste de 256.
+
+6. Tiene una preferencia IPv6 de media.
+
+
+## Gestion de rutas
+
+Las rutas pueden ser gestionadas usando 
+
+- route 
+- ip route 
+
+Para agregar y eliminar 
+
+```
+route -6 add 2001:db8:1::/64 gw 2001:db8::3   -> Agregar con route
+
+route -6 del 2001:db8:1::/64 gw 2001:db8::3   -> Eliminar con route
+
+```
+
+```
+ip route add 2001:db8:1::/64 via 2001:db8::3
+
+ip route del 2001:db8:1::/64 via 2001:db8::3
+```
 
 
 
