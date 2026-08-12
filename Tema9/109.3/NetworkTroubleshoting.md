@@ -272,4 +272,25 @@ ip route del 2001:db8:1::/64 via 2001:db8::3
 
 -> Leccion 2
 
+Para probar conexion, usaremos algunas herramientas que nos pueden ayudar a diagnosticar el estado, si hay conexion o no o algun otro problema
+
+## Probar conexion con `ping`
+
+Los comandos ping y ping6 son usados para enviar una solicitud de eco ICMP a una direccion IPv4 o IPv6, respectivamente.
+
+1. Una peticion de eco de ICMP envia una pequeña cantidad de datos a la direccion de destino
+2. Si la direccion de destino es alcanzable, enviara un mensaje de respuesta de eco ICMP de vuelta al remitente con los mismos datos que le fueron enviados 
+
+
+**Nota:** Se puede usar la opcion -c para especificar el numero de paquetes a enviar, si se omite, tanto ping y ping6 seguiran enviando paquetes hasta la señal de salida `ctrl+c`
+
+Que no se pueda hacer ping a un host no significa que no pueda conectarse a el. Muchas organizaciones tienen cortafuegos o listas de control de acceso al router, que bloquean todo lo que no sea el minimo necesario para que sus sistemas funcionen
+
+## Traceroute
+
+Los programas `traceroute` y  `traceroute6` pueden usarse para mostrar la ruta que sigue un paquete para llegar a su destino. Lo hacen enviando multiples paquetes al destino, incrementando el campo Time-To-Live (TTL) de la cabecera IP con cada paquete subsiguiente
+
+
+
+
 
