@@ -288,8 +288,138 @@ Que no se pueda hacer ping a un host no significa que no pueda conectarse a el. 
 
 ## Traceroute
 
-Los programas `traceroute` y  `traceroute6` pueden usarse para mostrar la ruta que sigue un paquete para llegar a su destino. Lo hacen enviando multiples paquetes al destino, incrementando el campo Time-To-Live (TTL) de la cabecera IP con cada paquete subsiguiente
+Los programas `traceroute` y  `traceroute6` pueden usarse para mostrar la ruta que sigue un paquete para llegar a su destino. Lo hacen enviando multiples paquetes al destino, incrementando el campo Time-To-Live (TTL) de la cabecera IP con cada paquete subsiguiente. Cada router a los largo del camino respondera con un mensaje ICMP de TTL excedido
 
+
+```
+$ traceroute 192.168.1.20
+traceroute to 192.168.1.20 (192.168.1.20), 30 hops max, 60 byte packets
+ 1  10.0.2.2 (10.0.2.2)  0.396 ms  0.171 ms  0.132 ms
+ 2  192.168.1.20 (192.168.1.20)  2.665 ms  2.573 ms  2.573 ms
+$ traceroute 192.168.50.2
+traceroute to 192.168.50.2 (192.168.50.2), 30 hops max, 60 byte packets
+ 1  192.168.50.2 (192.168.50.2)  0.433 ms  0.273 ms  0.171 ms
+$ traceroute6 2001:db8::11
+traceroute to 2001:db8::11 (2001:db8::11), 30 hops max, 80 byte packets
+ 1  2001:db8::11 (2001:db8::11)  0.716 ms  0.550 ms  0.641 ms
+ $ traceroute 2001:db8::11
+traceroute to 2001:db8::11 (2001:db8::11), 30 hops max, 80 byte packets
+ 1  2001:db8::10 (2001:db8::11)  0.617 ms  0.461 ms  0.387 ms
+```
+
+- Por defecto traceroute envia 3 paquetes UDP con datos basura al puerto 33434, incrementandolo cada vez que envia un paquete 
+- Cada linea de salida del comando es una interfaz de router por la que atravieza el paquete
+- El tiempo mostrado en cada linea de salida es el tiempo de ida y vuelta de cada paquete, la direccion ip es la direccion de la interfaz del router en cuestion
+- Si traceroute puede, utiliza nombre DNS de la interfaz del router (Aveces se vera * en lugar de un tiempo, cuando esto sucede significa que traceroute nunca recibio el mensaje de TLL excedido para este paquete, cuando se empieza a ver este comportamiento suele indicar que la ultima respuesta es el ultimo salto de la ruta)
+- Si tiene acceso a root, la opcion -I hara que traceroute use peticiones de eco ICMP en lugar de paquetes UDP, siendo la opcion mas efectiva
+
+```
+# traceroute -I learning.lpi.org
+traceroute to learning.lpi.org (208.94.166.201), 30 hops max, 60 byte packets
+ 1  047-132-144-001.res.spectrum.com (47.132.144.1)  9.764 ms  9.702 ms  9.693 ms
+ 2  096-034-094-106.biz.spectrum.com (96.34.94.106)  8.389 ms  8.481 ms  8.480 ms
+ 3  dtr01hlrgnc-gbe-4-15.hlrg.nc.charter.com (96.34.64.172)  8.763 ms  8.775 ms  8.770 ms
+ 4  acr01mgtnnc-vln-492.mgtn.nc.charter.com (96.34.67.202)  27.080 ms  27.154 ms  27.151 ms
+```
+
+Algunas organizaciones bloquean las peticiones y respuestas de eco ICMP, para evitarlo podemos usar TCP. Al utilizar un puerto TCP abierto conocido, puede garantizar que el host de destino respondera, para usarlo, usamos -T junto con -p para especificar el puerto, al igual que con las peticiones de eco ICMP, debe tener acceso a root para hacer esto
+
+
+```
+traceroute -m 60 -T -p 80  learning.lpi.org
+
+
+donde 
+-m es el limite maximo de saltos
+-T especifica que se usara el protocolo tcp
+-p especifica el puerto al que sera enviado
+
+```
+
+**Nota:**Al igual que ping, traceroute tiene sus limitaciones. Es posible que los cortafuegos y los routers bloqueen los paquetes enviados o devueltos por traceroute, si hay acceso al root, pueden ayudarte aobtener resultados precisos
+
+## Tracepath y busqueda de MTU
+Tracepath y traceroute son similiares, la diferencia entre estos dos es que el primero rastrea los tamaños de las unidades maximas de trasnmision (MTU) a lo largo de la ruta. MTU es un ajuste configurado en una interfaz de red o una limitacion de hardware de la unidad de datos de protocolo mas grande que puede trasnmitir o recibir. 
+
+El programa tracepath funciona de la misma manera que traceroute en el sentido de que incrementa el TTL con cada paquete. Se diferencia en que envia un datagrama UDP muy grande
+
+- a diferencia de traceroute se debe de usar explicitamente tracepath6 
+
+```
+$ tracepath 192.168.1.20
+ 1?: [LOCALHOST]                                         pmtu 1500
+ 1:  10.0.2.2                                              0.321ms
+ 1:  10.0.2.2                                              0.110ms
+ 2:  192.168.1.20                                          2.714ms reached
+     Resume: pmtu 1500 hops 2 back 64
+```
+
+```
+$ tracepath 2001:db8::11
+tracepath: 2001:db8::11: Address family for hostname not supported
+$ tracepath6 2001:db8::11
+ 1?: [LOCALHOST]                        0.027ms pmtu 1500
+ 1:  net2.example.net                                      0.917ms reached
+ 1:  net2.example.net                                      0.527ms reached
+     Resume: pmtu 1500 hops 1 back 1
+```
+
+**La salida es similar a traceroute, la ventaja de tracepath es que la ultima linea muestra la MTU mas pequeña de todo el enlace. Esto puede ser util para solucionar problemas de conexiones que no pueden manejar fragmentos**
+
+Al igual que con las herramientas de solucion de problemas anteriores, existe la probabilidade de que los equipos bloqueen sus paquetes
+
+## Creacion de conexiones arbitrarias 
+
+Para crear conexiones, usaremos el programa llamado `netcat`, puede enviar o recibir datos arbitrarios a travez de una conexion de red TCP o UDP
+
+ejemplo:
+
+```
+nc -l 1234
+```
+
+La salida de LPI Example aparece después del siguiente ejemplo, que está configurando un remitente netcat para enviar paquetes a net2.example.net en el puerto 1234. La opción -l se utiliza para especificar que se desea que nc reciba datos en lugar de enviarlos:
+
+```
+$ nc net2.example.net 1234
+LPI Example
+```
+
+Para terminar la conexion, solo usamos ctrl+C
+
+##  Ver conexiones y oyentes acutales
+Tanto netstat y ss pueden utilizase para ver el estado de sus oyentes y conexiones actuales 
+
+Al igual que ifconfig, netstat es un herramienta heredada, tanto netstat como ss tienen salidas y opciones similares, algunas opciones son:
+
+-a Muestra todos los sockets
+-l Presenta los sockets en escucha
+-p Muestra el proceso asociado a la conexion
+-n Evita la busqueda de nombres tanto para los puertos como para las direcciones
+-t Presenta conexiones TCP
+-u Muestra las conexiones UDP
+
+```
+# netstat -tulnp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      892/sshd
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      1141/master
+
+
+
+# ss -tulnp
+# ss -tulnp
+Netid  State      Recv-Q Send-Q      Local Address:Port                     Peer Address:Port
+udp    UNCONN     0      0                       :68                                  *:                   users:(("dhclient",pid=693,fd=6))
+tcp    LISTEN     0      128                     :22                                  *:                   users:(("sshd",pid=892,fd=3))
+
+```
+
+
+- La columna Recv-Q es el número de paquetes que un socket ha recibido pero no ha pasado a su programa. 
+- La columna Send-Q es el número de paquetes que un socket ha enviado y que no han sido reconocidos por el receptor. 
+- El resto de las columnas se explican por sí mismas
 
 
 
