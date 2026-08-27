@@ -219,6 +219,158 @@ mientras que
 `lsof` pregunta --> Que proceso tiene abierto este recurso/socket??
 
 
+### fuser
+Su proposito principal es encontrar el "usuario de un fichero", lo que implica saber que procesos estan accediendo a que ficheros, directorio o sockets
+
+Para obtener un poco mas de informacion, conviene usar ( -v o --verbose)
+
+```
+root@debian:~# fuser .
+/root:                 580c
+root@debian:~# fuser -v .
+                     USER        PID ACCESS COMMAND
+/root:               root        580 ..c.. bash
+```
+
+Explicacion de la salida
+
+- File: El archivo del que estamos obtenido informacion (/root)
+- User: El propietario del fichero (root)
+- PID: El identificador del proceso (580)
+- Access: Tipo de acceso (..c..), Uno de: c Directorio Actual, e Ejecutables que se llevan acabo, f Abrir archivo (se omite en el modo de visualizacion por defecto), F Abrir archivo para escribir (se omite en el modo de visualizacion por defecto), r Directorio raiz, m archivo mmap'ed o biblioteca compartida, . Marcador de posicion (omitido en el modo de visualizacion por defecto)
+- Command: El comando afiliado al archivo (bash)
+
+Con la opcion -n (o --namespace), puede encontrar informacion sobre los puertos/sockets 
+
+
+fuser también se puede utilizar para matar los procesos que acceden al archivo con las opciones -k o --kill (por ejemplo: fuser -k 80/tcp)
+
+
+### netstat
+Se utiliza para imprimir "estadisticas de red"
+
+Sin opciones, netstat mostrara tanto las conexiones activas a internet como los sockets de Unix
+
+Se usa:
+-l o --listenig para ver los puertos y sockets en "escucha"
+
+-t/--tcp y -u/--udp para filtrar entre tcp o udp
+
+-e/--extend mostrara informacion adicional 
+
+-n/--numeric Para imprimir solo los numeros de puerto y las direcciones IP
+
+### nmap (network mapper)
+
+Este escaner de puertos se ejecuta especificando una direccion IP o un noombre de host:
+
+```
+namp localhost
+
+Starting Nmap 7.70 ( https://nmap.org ) at 2020-06-04 19:29 CEST
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.0000040s latency).
+Other addresses for localhost (not scanned): ::1
+Not shown: 998 closed ports
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http
+```
+
+A parte de un solo host,nmap le permite escanear
+
+- Múltiples hosts: Separándolos con espacios (por ejemplo: nmap localhost 192.168.1.7).
+- Rangos de hosts: Utilizando un guión (por ejemplo: nmap 192.168.1.3-20).
+- Subredes: Utilizando un comodín o una notación CIDR (por ejemplo: nmap 192.168.1.* o nmap 192.168.1.0/24). Puede excluir determinados hosts (por ejemplo: nmap 192.168.1.0/24 --exclude 192.168.1.7)
+
+Para escanear un puerto, usamos -p, por lo que nmap -p 22 y nmap -p ssh daran el mismo resultado, o tambien nmap -p 22,telnet,http localhost
+
+Otras opciones importantes son:
+
+- -F Ejecuta un escaneo rapido en los 100 puertos mas comunes
+- -v Obtiene una salida mas detallada (-vv imprimira una salida con mas informacion)
+
+### Resumen 
+
+lsof --> Muestra una,lista detallada de todos los archivos abiertos y los procesos que lo utilizan, responde a ¿Que arhcivos tiene abiertos ESTE proceso o el sistema?
+
+fuser --> Identifica que procesos estan utilizando archivos, sockets o sistemas de archivos especificos, responde a ¿Que procesos estan usando ESTE recurso?
+
+
+## Limites en los inicios de sesions de los usuarios, los procesos y el uso de la memoria 
+Los recursos de un sistema linux  no son ilimitados, por lo que como administrador del sistema, debes asegurr un buen equilibrio entre los limites de los usuarios sobre los recursos y el correcto funcionamiento del sistema operativo. `ulimit` puede ayudar en este sentido
+
+limite se ocupa de los limites soft y hard, especificados por las opciones -S y -H respectivamente
+
+Si se ejecuta sin opciones, ni argumentos, mostrara los bloques de archivos con limites flexibles del usuario actual
+
+```
+carol@debian:~$ ulimit
+unlimited
+```
+
+con la opcion -a mostrara todas las opciones disponibles que tenemos para cambiar
+
+Nota:Todos los valores que cambiaremos y que se muestran con -a seran los limites soft, ya que los limites hard solo los puede cambiar(aumentar) el usuario root, por lo que concluimos que tanto -a como -Sa daran el mismo resultado. Si no se especifica si es un limite soft (-S) o hard(-H), el cambio se guardara para ambas clasificaciones. Los usuarios regulares pueden disminuir los limites estrictos y aumentar los limites flexibles hasta el valor de los limites duros 
+
+Para que estos valores sean persistentes a travez de los reinicios, debe establecerlos en el archivo `/etc/security/limits.conf`, este archivo tambien es utilizado por el administrador para aplicar restricciones a determinados usuarios
+
+Para este comando no hay una pagina man, ya que es una integracion de bash, asi que tenemos que consultar la pagina man de bash para aprender sobre este 
+
+
+## Tratar con usuarios registrados 
+Como usuario administrador, implica llevar un registro de los usuarios conectados, para ello, hay tres utilidades, como: last, who y w
+
+### last
+Esta herramienta muestra informacion sobre las ultimas sesiones de inicio de sesion de los usuarios del sistema, muy util cuando necesitas rastrear la actividad del usuario del sistema o investigar alguna posible violacion de seguridad
+
+Ejemplo:
+
+```
+root@debian:~# last
+carol    pts/0        192.168.1.4      Sat Jun  6 14:25   still logged in
+reboot   system boot  4.19.0-9-amd64   Sat Jun  6 14:24   still running
+mimi     pts/0        192.168.1.4      Sat Jun  6 12:07 - 14:24  (02:16)
+reboot   system boot  4.19.0-9-amd64   Sat Jun  6 12:07 - 14:24  (02:17)
+(...)
+wtmp begins Sun May 31 14:14:58 2020
+```
+
+Considerando la anterior salida, obtenemos la informacion sobre los dos ultimos usuarios del sistema. Las dos primeras nos hablan del usuario carol, las dos siguientes del usuario mimi, la informacion es la siguiente:
+
+
+1. El usuario carol en la terminal pts/0 desde el host 192.168.1.4 inicio su sesion el sabado 6 de junio a las 14:25 y todavia esta conectada.  El sistema, que utiliza el kernel 4.19.0-9-amd64, se inició (reboot system boot) el sábado 6 de junio a las 14:24 y sigue funcionando.
+
+2. El usuario mimi en la terminal pts/0 desde el host 192.168.1.4 inició su sesión el sábado 6 de junio a las 12:07 y cerró la sesión a las 14:24 (la sesión duró un total de (02:16) horas). El sistema que utiliza el kernel 4.19.0-9-amd64, se inició (reboot system boot) el sábado 6 de junio a las 12:07 y se apagó a las 14:24 (estuvo funcionando durante (02:17) horas)
+
+
+**Nota: La linea wtmp begins Sun May 31 14:14:58 2020 se refiere a /var/log/wtmp, que es el archivo de registro especial del que last obtiene la informacion**
+
+Para ver la informacion de este arhcivo, usaremos el comando `utmpdump`
+
+Podemos filtrar para solo a un usuario para que muestre sus entradas, porejemplo:
+
+```
+last carol
+
+root@debian:~# last carol
+carol    pts/0        192.168.1.4      Sat Jun  6 14:25   still logged in
+carol    pts/0        192.168.1.4      Sat Jun  6 12:07 - 14:24  (02:16)
+carol    pts/0        192.168.1.4      Fri Jun  5 00:48 - 01:28  (00:39)
+(...)
+```
+
+En cuanto a la segunda columna (terminal), pts significa Pseudo Terminal Slave - en contraposición a un terminal TeleTYpewriter o tty propiamente dicho; 0 se refiere al primero (la cuenta comienza en cero)
+
+Para ver los intentos fallidos del sistema usaremos la siguiente herraminta:
+
+```
+lastb
+```
+
+
+
+
 
 
 
