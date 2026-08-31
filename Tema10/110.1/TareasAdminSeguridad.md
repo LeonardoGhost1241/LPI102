@@ -246,6 +246,24 @@ Con la opcion -n (o --namespace), puede encontrar informacion sobre los puertos/
 fuser también se puede utilizar para matar los procesos que acceden al archivo con las opciones -k o --kill (por ejemplo: fuser -k 80/tcp)
 
 
+Resumen de fuser y lsof 
+
+- lsof (List open files): Orientado al proceso, responde ¿Que archivos, sockets o bibliotecas tiene abiertos este proceso (el el sistema)?
+
+- fuser (File user): Orientado al recurso, Responde a ¿Que procesos estan utilizando este archivo, directorio, puerto o punto de montaje en particular?
+
+
+| Caso de uso | Comando recomendado | Razon |
+|-------------|---------------------|-------|
+|Desmontar un disco atascado | fuser| fuser -m /mnt/data te da directamente los PIDd que bloquean el desmontaje|
+|Matar rapido procesos de un puerto | fuser| fuser -k 8080/tcp envia un SIGKILL a todos los procesos en ese puerto en un solo paso|
+| Inspeccionar conexiones de red abiertas | lsof | lsof -i :80 te muestra el usuario, el protocolo, el PID y la direccion IP remota |
+| Ver todo lo que un proceso especifico tiene abierto | lsof | lsof -p <PID> lista ejecutables, bibliotecas .so, sockets y archivos de configuracion en uso |
+
+
+
+
+
 ### netstat
 Se utiliza para imprimir "estadisticas de red"
 
@@ -369,8 +387,211 @@ lastb
 ```
 
 
+Las utilidades who y w se centran en usuarios conectado, sin embargo la primera muestra quien esta conectado, mientras que la segunda tambien muestra info de lo que estan haciendo
+
+### who
+
+```
+root@debian:~# who
+carol    pts/0        2020-06-06 17:16 (192.168.1.4)
+mimi     pts/1        2020-06-06 17:28 (192.168.1.4)
+```
+
+Algunas de las opciones que podemos usar son:
+
+-b,--boot: Muestra la hora del ultimo arranque del sistema
+
+-r,--runlevel: Muestra el nivel de ejecucion actual
+
+-H,--heading: Imprime los titulos de las columnas
+
+### w
+Este comando muestra una salida mas detallada
+
+```
+root@debian:~# w
+ 17:56:12 up 40 min,  2 users,  load average: 0.04, 0.12, 0.09
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+carol    pts/0    192.168.1.4    17:16    1.00s  0.15s  0.05s sshd: carol [priv]
+mimi     pts/1    192.168.1.4    17:28   15:08   0.05s  0.05s -bash
+```
+
+La línea superior ofrece información sobre la hora actual (17:56:12), el tiempo que lleva el sistema en funcionamiento (up 40 min), el número de usuarios conectados en ese momento (2 usuarios) y los números de la media de carga (media de carga: 0,04, 0,12, 0,09). Estos valores se refieren al número de trabajos en la cola de ejecución promediados en los últimos 1, 5 y 15 minutos, respectivamente
+
+USER: Nombre de inicio de sesión del usuario.
+
+TTY: Nombre del terminal en el que se encuentra el usuario.
+
+FROM: Host remoto desde el que el usuario se ha conectado.
+
+LOGIN@: Hora de inicio de sesión.
+
+IDLE: Tiempo de inactividad.
+
+JCPU: Tiempo utilizado por todos los procesos conectados a la tty (incluidos los trabajos en segundo plano que se están ejecutando actualmente).
+
+PCPU: Tiempo utilizado por el proceso actual (el que se muestra bajo WHAT).
+
+WHAT: Línea de comandos del proceso actual
+
+Al igual que con `who`, puede pasarle nombres de usuario `w`:
+
+```
+root@debian:~# w mimi
+ 18:23:15 up  1:07,  2 users,  load average: 0.00, 0.02, 0.05
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+mimi     pts/1    192.168.1.4      17:28    9:23   0.06s  0.06s -bash
+```
+
+## Configuracion y uso basico de `sudo`
 
 
+Con este comando, se puede ejecutar un comando como usuario root o cualquier otro usuario, Desde una perspectiva de seguridad, sugo es una opcion mucho mejor que su ya que prsenta dos ventajas:
+
+1. Para ejecutar un comando como root, no se necesita la contraseña del usuario root, sino sólo la del usuario que lo invoca en cumplimiento de una política de seguridad. La política de seguridad por defecto es sudoers como se especifica en /etc/sudoers y /etc/sudoers.d/*.
+
+2. sudo le permite ejecutar comandos individuales con privilegios elevados en lugar de lanzar un nuevo subshell para root como hace su.
+
+La forma mas basica para usar el comando sudo es:
+
+sudo -u user command, ejemplo:
+
+```
+carol@debian:~$ sudo -u mimi whoami
+mimi
+carol@debian:~$ sudo whoami
+root
+```
+
+**Nota: sudoers utilizará una marca de tiempo por usuario (y por terminal) para el almacenamiento en caché de las credenciales, de forma que pueda utilizar sudo sin contraseña durante un período por defecto de quince minutos. Este valor por defecto puede ser modificado añadiendo la opción timestamp_timeout como un ajuste Defaults en /etc/sudoers (por ejemplo Defaults timestamp_timeout=1 establecerá el tiempo de espera de la caché de credenciales en un minuto).**
+
+
+## Archivo `/etc/sudoers`
+
+El archivo de configuración principal de sudo es /etc/sudoers (también existe el directorio /etc/sudoers.d
+
+En este arhcivo se especifica quien puede ejecutar que comandos como que usuarios en que maquinas, asi como otras configuraciones, la sintaxis es:
+
+```
+carol@debian:~$ sudo less /etc/sudoers
+(...)
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL
+(...)
+```
+
+La especificacion de privilegios para el usuario root es ALL=(ALL:ALL) ALL
+
+Esto se traduce como: El usuario root puede iniciar sesion desde todas las maquinas (ALL), como todos los usuarios y todos los grupos ((ALL:ALL)) y ejecutar todos los comandos (ALL)
+
+Lo mismo ocurre con el grupo sudo, el cual se denota como 
+
+%sudo 
+
+Con la sintaxis
+
+%grupo_nombre
+
+Ejemplo: Para que el usuario carol pueda comprobar el estado de `apache` desde cualquier host como cualquier usuario o grupo, añadira la siguiente linea en el fichero sudoers
+
+```
+carol ALL=(ALL:ALL) /usr/bin/systemctl status apache2 
+```
+
+Para que no pida contraseña al ejecutar el comando hacemos: 
+
+```
+carol ALL=(ALL:ALL) NOPASSWD: /usr/bin/systemctl status apache2
+```
+
+
+Si ahora queremos restringir los host a 192.168.1.7 y permitir que caro ejecute el comando anterior como usuario `mimi`, agregaremos lo siguiente
+
+```
+carol 192.168.1.7=(mimi) /usr/bin/systemctl status apache2
+```
+
+Por lo que ahora ejecutaremos el comando: 
+
+```
+carol@debian:~$ sudo -u mimi systemctl status apache2
+● apache2.service - The Apache HTTP Server
+   Loaded: loaded (/lib/systemd/system/apache2.service; enabled; vendor preset: enabled)
+   Active: active (running) since Tue 2020-06-09 13:12:19 CEST; 29min ago
+(...)
+```
+
+En dado caso de que carol fuese promovida y quisieramos darle TODOS los privilegios, el enfoque seria mas facil con solo incluirla en el grupo especial `sudo` con:
+
+```
+sudo useradd -aG sudo carol
+```
+
+**Nota: En distribuciones como Red Hat el grupo sera wheel, que es la contrapartida del grupo administrativo especial sudo de los sistemas Debian**
+
+En lugar de editar directamente el archivo `/etc/sudoers`, debemos de usar el comando visudo , el cual abrira el archivo con el editor de texto predefinido
+
+**Como alternativa, puede especificar un editor de texto, a traves de la variable de entorno, EDITOR cuando usemos visudo, como: export EDITOR=$(which vim)**
+
+
+Aparte de los usuarios y grupos, tambien puede hacer uso de los alias en  `/etc/sudoers`, hay tres categorias principales:
+
+1. Alias de host (Host_Alias)
+2. Alias de usuario (User_Alias)
+3. Alias de comando (Cmnd_Alias)
+
+Aqui hay un ejemplo:
+
+```
+# Especificación de alias de host
+
+Host_Alias SERVERS = 192.168.1.7, server1, server2
+
+# Especificación de alias de usuario
+
+User_Alias REGULAR_USERS = john, mary, alex
+
+User_Alias PRIVILEGED_USERS = mimi
+
+User_Alias ADMINS = carol, %sudo, PRIVILEGED_USERS, !REGULAR_USERS
+
+# Especificación de alias de Cmnd
+
+Cmnd_Alias SERVICES = /usr/bin/systemctl *
+
+# Especificación de los privilegios del usuario
+root    ALL=(ALL:ALL) ALL
+ADMINS  SERVERS=SERVICES
+
+# Permitir a los miembros del grupo sudo ejecutar cualquier comando
+%sudo   ALL=(ALL:ALL) ALL
+```
+
+
+Teniendo en cuentra este archivo, vamos a explicar los tres tipos de alias:
+
+- `Host aliases`: Incluye una lista separada por comas de nombres de host, direcciones IP, asi como redes y netgroups (precedidos por +). Tambien se pueden especificar mascaras de red. Alias de host Servers incluye una direccion IP y dos nombres de host:
+
+```
+Host_Alias SERVERS = 192.168.1.7, server1, server2
+```
+
+- `User aliases`: Incluye una lista separa por comas de usuarios especificados como nombres de usuario, grupos (precedido por %) y netgroups (precedidos por +). Se pueden excluir usuarios concretos con !. El alias de usuario ADMINS - por ejemplo - incluye al usuario carol, los miembros del grupo sudo y aquellos miembros del alias de usuario PRIVILEGE_USERS que no pertenecen al alias de usuario REGULAR_USERS:
+
+```
+User_Alias ADMINS = carol, %sudo, PRIVILEGED_USERS, !REGULAR_USERS
+```
+
+- `Command aliases` Incluyen una lista de comandos y dirdctorios separados por comas. Si se especifica un directorio, se incluira cualquier archivo de ese directorio, aunque se ignoraran los subdirectorios. El alias de comando `Services` incluye un solo comando con todos sus subcomandos - segun lo especificado por el asterisco (*)
+
+```
+Cmnd_Alias SERVICES = /usr/bin/systemctl *
+```
+
+Como resultado de las especificaciones de alias, la línea ADMINS SERVERS=SERVICES bajo la sección Especificación de privilegios del usuario se traduce como: todos los usuarios pertenecientes a ADMINS pueden usar sudo para ejecutar cualquier comando en SERVICES en cualquier servidor en SERVERS
 
 
 
