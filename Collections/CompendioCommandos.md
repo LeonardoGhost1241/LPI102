@@ -1,6 +1,36 @@
 
 # Compendio de comandos 
 
+## 105: Shells y script 
+#### Personalizar el entorno de shell
+
+bash - Es usado para ejecutar terminales 
+    -l o --login    Invocara un shell de inicio de sesion 
+    -i  Invocara un shell interactivo 
+    --noprofile Con shell de inicio de sesión ignorará tanto el archivo de inicio de todo el sistema /etc/profile como los archivos de inicio a nivel de usuario ~/.bash_profile, ~/.bash_login y ~/.profile
+    --norc  Con el shell interactivo ignorara tanto el archivo de inicio del sistema /etc/bash/bashrc como el archivo del inicio de sesion a nivel de usuario ~/.bashrc
+
+
+su - Cambia el ID de usuario o lo convierte en superusuario (root), con este comando porde invocar ambos shells, el de inicio de sesion y sin inicio de sesion:
+    `su - user2`, `su -l user2` o `su --login user2` iniciara un shell de inicio de sesion interactivo como user2
+    `su user2` iniciara un shell interactivo y sin inicio de sesioncomo `user2`
+    `su - root` o `su -` iniciara un shell de inicio de sesion interactivo como root
+    `su root` o `su` iniciara un shell interactivo y sin inicio de sesion como root
+
+sudo - Ejecuta comandos como otro usuario (incluyendo el superusuario). Debido a que este comando se usa principalmnte para obtener privilegios temporales de root, el usuario que lo use, debe de estar en el archivo sudoers o agregarlo a grupo sudo (wheel en otras distribuciones). Asi como su, sudo nos permite invocar tanto shells de inicio de sesion como los de no de inicio de sesion
+    `sudo su - user2`, `sudo su -l user2`, `sudo su --login user2` iniciara un shell de inicio de sesion interactivo como user2
+    `sudo su user2` iniciara un shell interactivo sin inicio de sesion como user2
+    `sudo -u user2 -s` iniciara un shell interactivo sin inicio de sesion como `user2`
+    `sudo su - root` o `sudo su -` iniciara un shell de inicio de sesion interactivo como `root`
+    `sudo -i` iniciara un shell de inicio de sesion interactivo como root
+    `sudo -i <some_command>` iniciara un shell de inicio de sesion interactivo como root, ejecuta el comando y volvera al usuario original
+    `sudo su root` o `sudo su ` iniciara un shell interactivo sin inicio de seison como root
+    `sudo -s o sudo -u root -s` iniciara un shell sin inicio de sesion como `root`
+
+
+. y source - son usados para ejecutar scripts desde otros, sin la necesidad de reiniciar el equipo, un ejemplo es cuando modificamos el .bashrc
+
+
 
 
 ## 107: Tareas administrativas
