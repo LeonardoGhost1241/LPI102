@@ -180,13 +180,41 @@ unalias - Elimina un alias
 
 
 
-
-
-
-
-
-
-
-
 ## 107: Tareas administrativas
 #### Administrar cuentas de usuario y de grupo y los archivos de sistema relacionados con ellas
+
+`/etc/skel` - Este directorio contendra los principales arhcivos que seran creados cuando se cree un nuevo usuario 
+
+`/etc/login.defs` - Especifica los parametros de configuracion que controlan la creacion de usuario y grupos 
+
+**Nota:**
+- Los comandos mostrados en las secciones anteriores toman por defecto valores de este archivo 
+- Es bueno que al administrar usuario o grupos, ver la configuracion de este archivo, para cambiar la configuracion por defecto del sistema
+
+
+
+
+`/etc/passwd` - Archivo de 7 campos, delimitados por dos puntos que contiene informacion basica sobre los usuarios
+
+`/etc/group` - Esun arhcivo de 4 campos delimitados por dos puntos que contienen informacion basica sobre los grupos
+
+`/etc/shadow` - Un arhcivo de nueve campos delimitados por dos puntos que contienen contrasenias encriptadas de usuario
+
+`/etc/gshadow` - Un archivo de cuatro campos delimitados por dos puntos que contienen password de grupo encriptadas
+
+
+getent - Este comando muestra las entradas de las bases de datos soportadas por lasbibliotecas Name Service Switch (NSS) y requiere el nombre de la base de datos y una clave de busqueda
+
+**Nota:**
+- Si no se proporciona ningun argumento  de clave, se muestran todas las entradas de la base de datos especificada (A menos que la base de datos no soporte la enumeracion)
+- getent solo puede acceder a las bases de datos configuradas en el archivo `/etc/nsswitch.conf`
+
+
+
+#### Automatizar tareas repetitivas del sistema mediante la programacion de trabajos 
+
+
+
+
+
+
