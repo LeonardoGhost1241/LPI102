@@ -491,10 +491,10 @@ check_vids(){
 
 ## Tema 106: Interfaces de Usuario y Escritorios 
 ### 106.1 - Intalar y configurar X11
-
 -> Leccion 1 
 #### Ejercicios Guiados
 #### Ejercicios Exploratorios 
+
 
 ### 106.2 - Escritorios graficos 
 
@@ -1021,11 +1021,439 @@ iconv -f UTF-8 -t ASCII//TRANSLIT -o ascii.txt readme.txt
 
 
 
+
+
+
 ## Tama 108: Servicios esenciales del sistema
 ### 108.1 - Mantener la hora del sistema 
+
+-> Leccion 1 
+#### Ejercicios Guiados
+
+1. Indique si los siguientes comandos están mostrando o modificando la hora del sistema o la hora del hardware:
+
+|       Comando(s)                    | Sistema | Hardware | Ambos |
+|-------------------------------------|---------|----------|-------|
+|       'date -u'                     |   x     |          |       |
+| 'hwclock --set --date "12:00:00"'   |         |     x    |       |
+|       'timedatectl'                 |   x     |          |  X    |
+|     'timedatectl | grep RTC'        |   x     |     x    |       |
+|     'hwclock --hctosys'             |   x     |          |       |
+|   'date +%T -s "08:00:00"'          |   x     |          |       |
+|  'timedatectl set-time 1980-01-10'  |   x     |          |       |
+
+
+2. Observe la siguiente salida, y luego corrija el formato del argumento para que el comando sea exitoso:
+
+```
+$ date --debug --date "20/20/12 0:10 -3"
+
+date: warning: value 20 has less than 4 digits. Assuming MM/DD/YY[YY]
+date: parsed date part: (Y-M-D) 0002-20-20
+date: parsed time part: 00:10:00 UTC-03
+date: input timezone: parsed date/time string (-03)
+date: using specified time as starting value: '00:10:00'
+date: error: invalid date/time value:
+date:     user provided time: '(Y-M-D) 0002-20-20 00:10:00 TZ=-03'
+date:        normalized time: '(Y-M-D) 0003-08-20 00:10:00 TZ=-03'
+date:                                  ---- --
+date:      possible reasons:
+date:        numeric values overflow;
+date:        incorrect timezone
+date: invalid date ‘20/20/2 0:10 -3’
+```
+
+El formato de la fecha esta mal, segun la salida del comando el formato es anio, mes y dia, por lo que entonces el comando correcto es:
+
+```
+date --debug --sate "2020/02/12 00:10 -3"
+```
+
+
+3. Use el comando date y las secuencias para que el mes del sistema sea febrero. Deje el resto de la fecha y la hora sin cambios.
+
+```
+date +%m -s "2"
+
+date --set="YYYY/02/DD"  -> Sustituyendo YYYY por el año y DD por el dia 
+date -s "2020/02/12"
+```
+
+4. Asumiendo que el comando anterior tuvo éxito, use hwclock para ajustar el reloj del hardware desde el reloj del sistema.
+
+```
+hwclock --systohc
+```
+
+5. Hay un lugar llamado eucla. ¿De qué continente forma parte? Use el comando grep para averiguarlo.
+
+```
+find /usr/share/zoneinfo/ -iname "eucla"
+```
+
+6. Establezca su zona horaria actual en la de eucla.
+
+Puede ser de varias maneras como:
+
+```
+rm /etc/localtime && ln -s $(find /usr/share/zoneinfo/ -iname "eucla") /etc/localtime
+
+```
+
+o puede ser como:
+
+```
+timedatectl set-timezone "Australia/Eucla"
+```
+
+
+#### Ejercicios Exploratorios 
+
+1. ¿Qué método de ajuste de tiempo es el óptimo? ¿En qué escenario podría ser imposible el método preferido?
+
+El metodo mas seguro es usando el comando timedatectl,
+
+2. ¿Por qué cree que hay tantos métodos para lograr lo mismo, es decir, establecer la fecha y hora del sistema?
+
+Generalmente algunas distribuciones no tienen systemd y no tiene el comando timedatectl por lo que es necesario usar comando como date o hwclock para ajustar mediante el, el reloj del sistema
+
+3. Después del 19 de enero de 2038, Linux System Time requerirá un número de 64 bits para almacenar. Sin embargo, es posible que podamos elegir simplemente establecer un “nuevo epoch”. Por ejemplo, el 1 de enero de 2038 a medianoche podría establecerse una nueva época de 0. ¿Por qué cree que esto no se ha convertido en la solución preferida?
+
+
+-> Leccion 2 
+
+#### Ejercicios Guiados 
+#### Ejercicios Exploratorios 
+
+
 ### 108.2 - Registros del sistema
+
+-> Leccion 1
+#### Ejercicios Guiados 
+
+1. Qué utilidades/comandos utilizarías en los siguientes escenarios:
+
+| Finalidad y archivo de registro                    |      Utilidad       |
+|----------------------------------------------------|---------------------|
+| Leer `/var/log/syslog.7.gz`                        | zless `/var/log/syslog.7.gz` |
+| Leer `/var/log/syslog`                             | less `/var/log/syslog`  |
+| Filtrar la palabra `renewal` en `/var/log/syslog`  | grep "renewal" `/var/log/syslog` |
+| Leer `/var/log/faillog`                            | faillog -a  \| less  |
+| Leer `/var/log/syslog` dinamicamente               | tail -f `/var/log/syslog` |
+
+
+2. Reorganice las siguientes entradas de registro de manera que representen un mensaje de registro válido con la estructura adecuada: 
+
+- debian-server
+
+- sshd
+
+- [515]:
+
+- Sep 13 21:47:56
+
+- Server listening on 0.0.0.0 port 22
+
+El orden correcto es:
+
+```
+Sep 13 21:47:56 debian-server sshd [515]: Server listening on 0.0.0.0 port 22
+```
+
+3. Qué reglas añadirías a /etc/rsyslog.conf para cumplir con cada una de las siguientes:
+
+- Enviar todos los mensajes de la instalación mail y una prioridad/gravedad de crit (y superior) a /var/log/mail.crit:
+
+Clasical configuration:
+
+```
+mail.crit    /var/log/mail.crit
+```
+
+RainerScript configuration:
+
+```
+if ( $syslogfacility-text == "mail" and $syslogfacility == 2 ) then {
+        action(type="omfile" file="/var/log/mail.crit")
+}
+```
+
+
+- Envía todos los mensajes de la instalación mail con prioridades de alerta y emergencia a /var/log/mail.urgent:
+
+Clasical configuration:
+
+```
+mail.alert;mail.emerg    /var/log/mail.urgent
+```
+
+RainerScript:
+
+```
+if ( $syslogfacility-text == "mail"  and ($syslogseverity-text == "alert" or $syslogseverity-text == "emerg")) then {
+        action(type="omfile" file="/var/log/mail.urgent")
+    }
+```
+
+- Excepto los procedentes de las instalaciones cron y ntp, envía todos los mensajes -independientemente de su facilidades y prioridad - a /var/log/allmessages:
+
+Clasical Configuration:
+
+```
+*.*;cron,ntp.none   /var/log/allmessages
+```
+
+RainerScript Configuration:
+
+```
+if ( $syslogfacility-text != "cron" and $syslogfacility-text != "ntp" ) then {
+        action(type="omfile" file="/var/log/allmessages")
+    }
+```
+
+- Con todos los ajustes requeridos correctamente configurados primero, envíe todos los mensajes de la instalación mail a un host remoto cuya dirección IP es 192.168.1.88 usando TCP y especificando el puerto por defecto:
+
+Para ello se mostrara la configuracion tanto del servidor como del cliente en ambos casos:
+
+
+Classical Configuration:
+
+Server 
+```
+# Ajustes previos requeridos para activar la recepción TCP:
+$ModLoad imtcp
+$InputTCPServerRun 514
+
+
+$template RemoteLogs,"/var/log/remotehosts/mailRemote.log"
+if $FROMHOST-IP=='192.168.1.4' then ?RemoteLogs
+& stop
+```
+
+Client
+```
+mail.* @@192.168.1.88:514  # Para mensajes TCP
+```
+
+RainerScript:
+
+Server
+```
+# Ajustes previos requeridos para activar la recepción TCP en RainerScript:
+module(load="imtcp")
+input(type="imtcp" port="514")
+
+# Creación de la plantilla para el archivo dinámico
+template(name="RemoteLogs" type="string" string="/var/log/remotehost/mailRemote.log")
+
+if ( $FROMHOST-IP=="192.168.1.4" ) then{
+       action(type="omfile" dynaFile="RemoteLogs")
+       stop
+}
+
+```
+
+Client
+```
+if($syslogfacility-text == "mail" ) then {
+        #action(type="omfile" file="/var/log/mail.log")
+        action(type="omfwd" target="192.168.1.88" port="514" protocol="tcp")
+    }
+```
+
+- Independientemente de su facilidad, envía todos los mensajes con la prioridad warning (sólo con la prioridad warning`) a `/var/log/warnings evitando la escritura excesiva en el disco:
+
+Clasical Configuration:
+```
+*.warn   -/var/log/warnings
+```
+
+RainerScrip:
+```
+if ($syslogseverity-text == "warning") then {
+        action(type="omfile" file="/var/log/mail.crit" sync="off")
+    }
+```
+
+
+
+4. Considere la siguiente sección de `/etc/logrotate.d/samba` y explique las diferentes opciones:
+
+```
+carol@debian:~$ sudo head -n 11 /etc/logrotate.d/samba
+/var/log/samba/log.smbd {
+        weekly
+        missingok
+        rotate 7
+        postrotate
+                [ ! -f /var/run/samba/smbd.pid ] || /etc/init.d/smbd reload > /dev/null
+        endscript
+        compress
+        delaycompress
+        notifempty
+}
+```
+
+|       Opción	    |     Significado       |
+|-------------------|-----------------------|
+|       weekly      | Es el intervalo de rotacion, en este caso es semanalmente |
+|      missingok    | Pasa al siguiente archivo sin emitir algun mensaje de error en caso de que no exista|
+|       rotate 7    | Va a rotar los archivos 7 veces, por lo que hara log1.smbd hasta el log7.smbd|
+|      postrotate   | Este script se ejecutara cada que sea rotado el documento|
+|      endscript    | Aqui termina el scrip |
+|       compress    | Comprime con gzip los archivos log|
+|    delaycompress  | En combinación con comprimir, pospone la compresión al siguiente ciclo de rotación|
+|    notifyempty    | No gire el registro si esta vacio |
+
+
+
+#### Ejercicios Exploratorios 
+
+1. En la sección “Plantillas y condiciones de filtrado” hemos utilizado uno basado en expresiones como condición de filtrado. Los filtros basados en propiedades son otro tipo de exclusivo de rsyslogd. Convierta nuestro filtro basado en expresiones en uno basado en propiedades:
+
+|        Filtro basado en expresiones                 |     Filtro basado en propiedades        |
+|-----------------------------------------------------|-----------------------------------------|
+| `if $FROMHOST-IP=='192.168.1.4' then ?              | : fromhost-ip, isequal, "192.168.1.4" ?RemoteLog |
+|   RemoteLogs`                                       | |
+
+
+2. `omusrmsg` es un módulo integrado en `rsyslog` que facilita la notificación a los usuarios (envía mensajes de registro al terminal del usuario). Escribe una regla para enviar todos los mensajes de emergencia de todas las instalaciones tanto a `root` como al usuario regular `carol`
+
+Classical Configuration
+```
+*.emerg                        :omusrmsg:root,carol
+```
+
+RainerScript
+```
+if ( $syslogpriority-text == "emerg") then { # prioridad emerg O SUPERIOR
+    action(type="omusrmsg" users="root,carol")
+}
+
+Para aplicarlo, podemos usar la funcion de syslog prifilt()
+
+if (prifilt("*.emerg")) then{
+        action(type="omusrmsg" users="root,carol")
+    }
+
+```
+
+-> Leccion 2 
+#### Ejercicios Guiados 
+
+1. Asumiendo que eres root, completa la tabla con el comando journalctl apropiado:
+
+|                  Proposito                                                                   |              Comando         |
+|----------------------------------------------------------------------------------------------|------------------------------|
+| Imprimir entradas de kernel                                                                  | journalctl -k 
+| Imprimir los mensajes del segundo arranque empezando por el principio del diario             | journalctl -b 1
+|Imprimir los mensajes del segundo arranque comenzando por el final del diario                 | journalctl -b 1 -e        
+| Imprimir los mensajes mas recientes del diario y seguir vigilando los nuevos                 | journalctl -f 
+| Imprime solo los mensajes nuevos desde ahora, y actualiza la salida continuamente            | journalctl -f 
+| Imprime los mensajes del arranque anterior con prioridad de advertencia y en orden inverso   | journalctl -p alert -r  o journalctl PRIORITY=1 -r 
+
+
+
+2. El comportamiento del demonio del diario en relación con el almacenamiento está controlado principalmente por el valor de la opción Storage en /etc/systemd/journald.conf. Indique qué comportamiento está relacionado con qué valor en la siguiente tabla:
+
+|                                               Comportamiento                                                                                | storage=auto |  Storage=none  | Storage=persistent | Storage=volatile | 
+|---------------------------------------------------------------------------------------------------------------------------------------------|--------------|----------------|--------------------|------------------|
+| Los datos del registro se desechan pero es posible el reenvio                                                                               |              |       X        |                    |                  |   
+| Una vez que el sistema ha arrancado, los datos de registro se almacenaran en `/var/log/journal`. Si no esta presente, se crea el directorio |              |                |          X         |                  |
+| Una vez arrancando el sistema, los datos de registro se almacenaran en `/var/log/journal`. Si no esta presente, el directorio no se creara  |       X      |                |                    |                  |
+| Los datos de registro se almacenaran en `/var/run/journal` pero no existiran despues de los reinicios                                       |              |                |                    |         X        |  
+
+
+
+3. Como ha aprendido, el diario se puede vaciar manualmente en función del tiempo, el tamaño y el número de archivos. Complete las siguientes tareas utilizando journalctl y las opciones apropiadas:
+
+- Compruebe cuanto espacio de disco ocupan los archivos del diario
+
+```
+journalctl --disk-usage
+```
+
+- Reducir la cantidad de espacio reservado para los ficheros de diario archivados y fijarlo en 200MiB
+
+Para ello modificaremos el archivo `/etc/systemd/journalctl.conf` y aregaremos lo siguiente 
+
+```
+SystemMaxFileSize=200M
+RuntimeMaxFileSize=200M
+```
+
+- Vuelva a comprobar el espacio en disco y explique los resultados 
+
+```
+journalctl --disk-usage 
+```
+
+No hay correlación porque --disk-usage muestra el espacio ocupado tanto por los ficheros de diario activos como por los archivados, mientras que --vacuum-size sólo se aplica a los ficheros archivados.
+
+
+
+#### Ejercicios Exploratorios 
+
+1. ¿Qué opciones deberías modificar en /etc/systemd/journald.conf para que los mensajes sean reenviados a /dev/tty5? ¿Qué valores deberían tener las opciones?
+
+Modificamos el archivo `/etc/systemd/journald.conf` y agregamos estas siguientes lineas 
+
+```
+ForwardToConsole=yes
+TTYPath=/dev/tty5
+```
+
+
+
+2. Proporciona el filtro correcto journalctl para imrpimir lo siguiente:
+
+|           Proposito                                               |               Filtro + Valor              |
+|-------------------------------------------------------------------|-------------------------------------------|
+| Imprimir los mensajes de un usuario especifico                    |             _ID=<user-id>
+| Imprimir mensajes de un host llamado debian                       |            _HOSTNAME=debian
+| Imprimir los mensajes de un grupo especifico                      |           _GID=<group-id>
+| Imprime los mensajes que pertenecen a root                        |              _ID=0
+| Basado en la ruta del ejecutable, imprime los mensajes de sudo    |            _EXE=/usr/bin/sudo
+| Basado en el nombre del comando, imprime los mensajes de sudo     |             _COMM=sudo
+
+
+3. Al filtrar por prioridad, los registros con una prioridad superior a la indicada también se incluirán en el listado; por ejemplo, el comando journalctl -p err imprimirá los mensajes de error, crítico, alerta y emergencia. Sin embargo, puedes hacer que journalctl muestre sólo un rango específico. ¿Qué comando usarías para que journalctl imprima sólo los mensajes de los niveles de prioridad warning, error y critical?
+
+```
+
+journalctl -p err..warning 
+```
+
+4. Los niveles de prioridad también se pueden especificar numéricamente. Vuelva a escribir el comando del ejercicio anterior utilizando la representación numérica de los niveles de prioridad:
+
+```
+journalctl -p 2..4
+
+```
+
+
+
+
 ### 108.3 - Conceptos basicos del agente de tranferencia de correo
 ### 108.4 - Gestion de la impresion y de las impresoras
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Tema 109: Fundamentos de redes
 ### 109.1 - Fundamentos de los protocolos de Internet
