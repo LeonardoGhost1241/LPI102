@@ -1036,11 +1036,11 @@ iconv -f UTF-8 -t ASCII//TRANSLIT -o ascii.txt readme.txt
 |-------------------------------------|---------|----------|-------|
 |       'date -u'                     |   x     |          |       |
 | 'hwclock --set --date "12:00:00"'   |         |     x    |       |
-|       'timedatectl'                 |   x     |          |  X    |
-|     'timedatectl | grep RTC'        |   x     |     x    |       |
+|       'timedatectl'                 |         |          |  X    |
+|     'timedatectl | grep RTC'        |         |     x    |       |
 |     'hwclock --hctosys'             |   x     |          |       |
 |   'date +%T -s "08:00:00"'          |   x     |          |       |
-|  'timedatectl set-time 1980-01-10'  |   x     |          |       |
+|  'timedatectl set-time 1980-01-10'  |         |          |   X   |
 
 
 2. Observe la siguiente salida, y luego corrija el formato del argumento para que el comando sea exitoso:
@@ -1077,6 +1077,11 @@ date +%m -s "2"
 
 date --set="YYYY/02/DD"  -> Sustituyendo YYYY por el año y DD por el dia 
 date -s "2020/02/12"
+
+o 
+
+date +%Y --set="02"
+
 ```
 
 4. Asumiendo que el comando anterior tuvo éxito, use hwclock para ajustar el reloj del hardware desde el reloj del sistema.
@@ -1435,6 +1440,17 @@ journalctl -p 2..4
 
 
 ### 108.3 - Conceptos basicos del agente de tranferencia de correo
+-> Leccion 2 
+
+#### Ejercicios Guiados 
+
+
+
+#### Ejercicios Exploratorios 
+
+
+
+
 ### 108.4 - Gestion de la impresion y de las impresoras
 
 
