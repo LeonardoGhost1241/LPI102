@@ -1440,18 +1440,38 @@ journalctl -p 2..4
 
 
 ### 108.3 - Conceptos basicos del agente de tranferencia de correo
--> Leccion 2 
 
 #### Ejercicios Guiados 
 
+1. Sin más opciones o argumentos, el comando mail henry@lab3.campus entra en el modo de entrada para que el usuario pueda escribir el mensaje a henry@lab3.campus. Después de terminar el mensaje, ¿qué tecla cerrará el modo de entrada y enviará el correo electrónico?
+
+
+
+
+
+2. ¿Qué comando puede ejecutar el usuario root para listar los mensajes no entregados que se originaron en el sistema local?
+
+3. ¿Cómo puede un usuario sin privilegios utilizar el método MTA estándar para reenviar automáticamente todo su correo entrante a la dirección dave@lab2.campus?
 
 
 #### Ejercicios Exploratorios 
 
 
 
+1. Utilizando el comando mail proporcionado por mailx, ¿qué comando enviará un mensaje a emma@lab1.campus con el archivo logs.tar.gz como adjunto y la salida del comando uname -a como cuerpo del correo electrónico?
+
+2. Un administrador de servicios de correo electrónico quiere supervisar las transferencias de correo electrónico a través de la red, pero no quiere saturar su buzón con mensajes de prueba. ¿Cómo podría este administrador configurar un alias de correo electrónico en todo el sistema para redirigir todo el correo electrónico enviado al usuario test al archivo /dev/null?
+
+3. ¿Qué comando, además de newaliases, podría utilizarse para actualizar la base de datos de alias después de añadir un nuevo alias a /etc/aliases?
+
+
+
 
 ### 108.4 - Gestion de la impresion y de las impresoras
+
+#### Ejercicios Guiados 
+
+#### Ejercicios Exploratorios 
 
 
 
