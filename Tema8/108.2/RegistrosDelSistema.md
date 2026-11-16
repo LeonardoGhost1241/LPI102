@@ -1,6 +1,6 @@
 # Registro del sistema 
 
-# Leccion 1 
+--> Leccion 1 
 
 Ademas de systemd-journald, hay 3 servicios principales que manejan registros, estos son:
 
@@ -272,11 +272,7 @@ carol@debian:~$ logger this comment goes into "/var/log/syslog"
 
 
 
-
-
-
-
-# Leccion 2
+--> Leccion 2
 
 
 

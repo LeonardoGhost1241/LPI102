@@ -1,6 +1,4 @@
-# Leccion 1 
-
-
+--> Leccion 1 
 
 ### Ejercicios guiados
 
